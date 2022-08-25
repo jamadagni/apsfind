@@ -162,13 +162,16 @@ void run_test_helper(TestParams &tp, double a, double b)
     double r = bisection(test, static_cast<void *>(&tp), a, b, &result_status);
 #endif
 
-    double expectedResult = test_results_from_scipy[test_results_from_scipy_index];
-    printf("Function %2d ; ", tp.t);
-    printf("result = %10.6e %10.6f ; ", r, r);
-    printf("deviation = %6.2f%% ; ", expectedResult == 0 ? fabs(r - expectedResult) * 100 : fabs((r - expectedResult) / expectedResult) * 100);
-    printf("iters = %2d ; ", result_status.iterations);
-    printf("funcalls = %2d\n", result_status.functionCalls);
-    test_results_from_scipy_index += 1;
+    if (test_results_from_scipy_index < 154)  // in case the tests are required to be run multiple times for measuring speed, output stats only first time
+    {
+        double expectedResult = test_results_from_scipy[test_results_from_scipy_index];
+        printf("Function %2d ; ", tp.t);
+        printf("result = %10.6e %10.6f ; ", r, r);
+        printf("deviation = %6.2f%% ; ", expectedResult == 0 ? fabs(r - expectedResult) * 100 : fabs((r - expectedResult) / expectedResult) * 100);
+        printf("iters = %2d ; ", result_status.iterations);
+        printf("funcalls = %2d\n", result_status.functionCalls);
+        test_results_from_scipy_index += 1;
+    }
 }
 
 void run_test(int id, double a, double b)
@@ -189,48 +192,41 @@ void run_test(int id, double a, double b, double p1, double p2)
     run_test_helper(tp, a, b);
 }
 
-int main()
+void run_all_tests()
 {
-    run_test(1, 3.14/2, 3.14);
+    run_test(1, 3.14 / 2, 3.14);
 
     for(int i = 1; i <= 10; i += 1)
-    {
-        run_test(2, i*i + 1e-9, (i+1)*(i+1) - 1e-9);
-    }
+        run_test(2, i * i + 1e-9, (i + 1) * (i + 1) - 1e-9);
 
     run_test(3, -9.0, 31.0, -40.0, -1.0);
     run_test(3, -9.0, 31.0, -100.0, -2.0);
     run_test(3, -9.0, 31.0, -200.0, -3.0);
 
     for(int n = 4; n <= 12; n += 2)
-    {
         run_test(4, 0.0, 5.0, 0.2, double(n));
-    }
     for(int n = 4; n <= 12; n += 2)
-    {
         run_test(4, 0.0, 5.0, 1.0, double(n));
-    }
     for(int n = 8; n <= 14; n += 2)
-    {
         run_test(4, -0.95, 4.05, 1.0, double(n));
-    }
+
     run_test(5, 0.0, 1.5);
+
     for(int n = 1; n <= 5; ++n)
-    {
         run_test(6, 0.0, 1.0, n);
-    }
     for(int n = 20; n <= 100; n += 20)
-    {
         run_test(6, 0.0, 1.0, n);
-    }
+
     run_test(7, 0.0, 1.0, 5);
     run_test(7, 0.0, 1.0, 10);
     run_test(7, 0.0, 1.0, 20);
+
     run_test(8, 0.0, 1.0, 2);
     run_test(8, 0.0, 1.0, 5);
     run_test(8, 0.0, 1.0, 10);
     run_test(8, 0.0, 1.0, 15);
     run_test(8, 0.0, 1.0, 20);
+
     run_test(9, 0.0, 1.0, 1);
     run_test(9, 0.0, 1.0, 2);
     run_test(9, 0.0, 1.0, 4);
@@ -238,6 +234,7 @@ int main()
     run_test(9, 0.0, 1.0, 8);
     run_test(9, 0.0, 1.0, 15);
     run_test(9, 0.0, 1.0, 20);
+
     run_test(10, 0.0, 1.0, 1);
     run_test(10, 0.0, 1.0, 5);
     run_test(10, 0.0, 1.0, 10);
@@ -251,7 +248,7 @@ int main()
 
     for(int n = 2; n <= 6; ++n)
         run_test(12, 1.0, 100.0, n);
-    for(int n = 7; n <= 33; n+=2)
+    for(int n = 7; n <= 33; n += 2)
         run_test(12, 1.0, 100.0, n);
 
     run_test(13, -1.0, 4.0);
@@ -262,6 +259,26 @@ int main()
     for(int n = 20; n <= 40; ++n)
         run_test(15, -1e4, 1e-4, n);
 
-    for(int n = 100; n <= 1000; n+=100)
+    for(int n = 100; n <= 1000; n += 100)
         run_test(15, -1e4, 1e-4, n);
+}
+
+#include "process_timer.c"
+
+int main(int argc, char * argv [])
+{
+    int rounds = 1;
+    if (argc == 2)
+        rounds = atoi(argv[1]);
+    else if (argc != 1)
+    {
+        fprintf(stderr, "Invalid input.");
+        return 1;
+    }
+    process_timer pt = process_timer_init();
+    for (int i = 0; i < rounds; ++i)
+        run_all_tests();
+    double secs = process_timer_read(pt);
+    printf("Time for %d round(s): %5.3f secs\n", rounds, secs);
+    return 0;
 }
