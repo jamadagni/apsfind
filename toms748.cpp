@@ -126,7 +126,11 @@ public:
                 if (cantDoCubic())
                     interpolateNewtonQuadratic(stepCount);
                 else
+                {
                     interpolateCubic();
+                    if (outOfBracket(c))
+                        interpolateNewtonQuadratic(stepCount);
+                }
                 if (evalRebracketAndCheckEnd())
                     return;
             }
@@ -329,9 +333,6 @@ private:
         double q33 = (d32 - q22) * fa / (fe - fa);
 
         c = q31 + q32 + q33 + a;
-
-        if (outOfBracket(c))
-            interpolateNewtonQuadratic(3);
     }
 
     bool cantDoCubic()
