@@ -93,9 +93,11 @@ public:
         areClose{absoluteTolerance, relativeTolerance},
         maxiter{maximumIterations},
         remiter{maximumIterations},
-        fncount{0},
         k{interpolationsPerIteration},
-        e{NAN}  // to ensure first interpolation of second iteration is quadratic
+        fncount{0},
+        e{NAN},  // to ensure first interpolation of second iteration is quadratic
+        fd{0},  // dummy value to fix weird error with optimization flag
+        fe{0}
     {
         if (checkBracketForEnd())  // maybe already input is so
             return;
