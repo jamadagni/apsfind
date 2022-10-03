@@ -440,3 +440,34 @@ double toms748(
 {
     return toms748Custom(function, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
 }
+
+extern "C"
+void toms748ResultStatusPrint(FILE * f, Toms748ResultStatus rs, int precision)
+{
+    fprintf(f, "Iterations: %d, Function Calls: %d\n", rs.iterations, rs.functionCalls);
+    fprintf(f, "Bracket: (%.*g, %.*g)\n", precision, rs.bracketStart, precision, rs.bracketEnd);
+    if (rs.errorCode == 0)
+        fprintf(f, "Error: none\n");
+    // input errors, using & as they may be OR-ed together
+    if (rs.errorCode & TOMS748_INVALID_INTERVAL_START)
+        fprintf(f, "Error: Non-finite start of interval\n");
+    if (rs.errorCode & TOMS748_INVALID_INTERVAL_END)
+        fprintf(f, "Error: Non-finite end of interval\n");
+    if (rs.errorCode & TOMS748_INVALID_INTERVAL)
+        fprintf(f, "Error: Interval start should be less than interval end\n");
+    if (rs.errorCode & TOMS748_INVALID_ABSOLUTE_TOLERANCE)
+        fprintf(f, "Error: Invalid absolute tolerance, should be zero or finite and at least 4 × machine epsilon\n");
+    if (rs.errorCode & TOMS748_INVALID_RELATIVE_TOLERANCE)
+        fprintf(f, "Error: Invalid relative tolerance, should be zero or finite and at least 4 × machine epsilon\n");
+    if (rs.errorCode & TOMS748_INVALID_MAXIMUM_ITERATIONS)
+        fprintf(f, "Error: Maximum iterations should be at least 1\n");
+    if (rs.errorCode & TOMS748_INVALID_INTERPOLATIONS_PER_ITERATION)
+        fprintf(f, "Error: Interpolations per iteration should be at least 1\n");
+    // execution errors, using == as they are mutually exclusive
+    if (rs.errorCode == TOMS748_INVALID_FUNCTION_VALUE)
+        fprintf(f, "Error: Non-finite function value encountered\n");
+    if (rs.errorCode == TOMS748_INTERVAL_DOES_NOT_BRACKET_A_ROOT)
+        fprintf(f, "Error: Interval does not bracket a root\n");
+    if (rs.errorCode == TOMS748_MAXIMUM_ITERATIONS_REACHED)
+        fprintf(f, "Error: Maximum iterations reached\n");
+}

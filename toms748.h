@@ -30,8 +30,8 @@ enum Toms748ErrorCode
     TOMS748_INVALID_INTERPOLATIONS_PER_ITERATION =  64,
     // errors in function execution, mutually exclusive
     TOMS748_INVALID_FUNCTION_VALUE               = 128,
-    TOMS748_INTERVAL_DOES_NOT_BRACKET_A_ROOT     = 129,
-    TOMS748_MAXIMUM_ITERATIONS_REACHED           = 130
+    TOMS748_INTERVAL_DOES_NOT_BRACKET_A_ROOT     = 256,
+    TOMS748_MAXIMUM_ITERATIONS_REACHED           = 512
 };
 
 typedef struct
@@ -62,6 +62,9 @@ double toms748(
     double intervalStart,
     double intervalEnd,
     Toms748ResultStatus * resultStatus);
+
+#include <stdio.h>
+void toms748ResultStatusPrint(FILE * f, Toms748ResultStatus rs, int precision);
 
 #ifdef __cplusplus
 } // extern "C"
