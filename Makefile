@@ -8,8 +8,9 @@ examples:
 	$(CXX) -c toms748.cpp
 	cd examples && $(CC) -o example_c example.c elliptic_integral.c ../toms748.o -lm && echo "Running C example" && ./example_c
 	cd examples && $(CXX) -o example_cpp example.cpp elliptic_integral.c ../toms748.o -lm && echo "Running C++ example" && ./example_cpp
+	cd examples && $(CC) -o example-d example-d.c ../toms748.o -lm && echo "Running C example #2" && ./example-d
 
 clean:
-	rm -f tests/toms748-tests tests/toms748-tests.out.txt tests/bisection-tests tests/bisection-tests.out.txt toms748.o examples/example_c examples/example_cpp
+	rm -f tests/toms748-tests tests/toms748-tests.out.txt tests/bisection-tests tests/bisection-tests.out.txt toms748.o examples/example_c examples/example_cpp examples/example-d
 
 .PHONY: tests examples clean

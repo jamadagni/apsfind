@@ -441,6 +441,31 @@ double toms748(
     return toms748Custom(function, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
 }
 
+typedef struct
+{
+    Toms748DoubleFunction function;
+    double target;
+} _Toms748DoubleParams;
+
+static double _toms748DoubleHelper(double guessInput, void * functionAndTarget)
+{
+    _Toms748DoubleParams * p = static_cast<_Toms748DoubleParams *>(functionAndTarget);
+    return p->function(guessInput) - p->target;
+}
+
+extern "C"
+double toms748d(
+    Toms748DoubleFunction function,
+    double target,
+    double intervalStart,
+    double intervalEnd)
+{
+    _Toms748DoubleParams params;
+    params.function = function;
+    params.target = target;
+    return toms748(_toms748DoubleHelper, (void *)(&params), intervalStart, intervalEnd, NULL);
+}
+
 extern "C"
 void toms748ResultStatusPrint(FILE * f, Toms748ResultStatus rs, int precision)
 {

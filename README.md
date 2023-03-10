@@ -27,7 +27,7 @@ Alefeld, G. E. and Potra, F. A. and Shi, Yixun,
 Algorithm 748: Enclosing Zeros of Continuous Functions,
 ACM Trans. Math. Softw. Volume 221(1995) doi = {10.1145/210089.210111}
 
-## Usage
+## Main Usage
 
 To use this routine, just copy the files `toms748.cpp`, `toms748.h` and `areclose.hpp` to convenient locations in your
 project, do `#include "toms748.h"` and add `toms748.cpp` in your object file compiling and linking.
@@ -59,6 +59,11 @@ error code if any. Of course, this pointer may be left null if this is not desir
 The return value of the routine is the middle-point of the bracket finally arrived at, and this is nominally to be taken
 as the root. This value will be `NaN` if an error was encountered.
 
+Looking at the [C example](examples/example.c) and [C++ example](examples/example.cpp)
+should make the usage much more concretely clear.
+
+## Other Usage
+
 The more customizable function `toms748Custom` (note the capital C) has four additional parameters at the end:
 
 ```
@@ -75,8 +80,23 @@ A convenience overload for `toms748` is available in C++ which can just take a f
 `resultStatus` pointer if not provided defaults to `nullptr`.) This may make usage more conceptually convenient, but may
 also mean slightly more compiled code due to the minimal template functions connecting C++ to the actual C API routines.
 
-Reading the [header file](toms748.h) and looking at the [C example](examples/example.c) and [C++ example](examples/example.cpp)
-should make things much more concretely clear.
+The convenience function `toms748d` is also available:
+
+```
+double toms748d(
+    Toms748DoubleFunction function,
+    double target,
+    double intervalStart,
+    double intervalEnd)
+```
+
+This helps search for an input value to a univariate function that will produce a given output.
+
+Here `Toms748DoubleFunction` is just a typedef to the univariate double-valued function pointer type `double (*)(double)`.
+
+`target` is the value that needs to be produced by `function`. `intervalStart` and `intervalEnd` are as before.
+
+Reading the [header file](toms748.h) should also provide more insight.
 
 ## License
 

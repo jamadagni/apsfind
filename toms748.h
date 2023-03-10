@@ -43,6 +43,8 @@ typedef struct
 
 typedef double(*Toms748InputFunction)(double, void *);
 
+typedef double(*Toms748DoubleFunction)(double);
+
 // function declarations
 
 double toms748Custom(
@@ -62,6 +64,12 @@ double toms748(
     double intervalStart,
     double intervalEnd,
     Toms748ResultStatus * resultStatus);
+
+double toms748d(
+    Toms748DoubleFunction function,
+    double target,
+    double intervalStart,
+    double intervalEnd);
 
 #include <stdio.h>
 void toms748ResultStatusPrint(FILE * f, Toms748ResultStatus rs, int precision);
