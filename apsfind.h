@@ -49,25 +49,25 @@ typedef double(*ApsFindUniFunction)(double);
 // function declarations
 
 double apsfindCustom(
-    ApsFindInputFunction function,
+    ApsFindInputFunction fn,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
-    ApsFindResultStatus * resultStatus,
+    ApsFindResultStatus * stat,
     double absoluteTolerance,
     double relativeTolerance,
     int maximumIterations,
     int interpolationsPerIteration);
 
 double apsfind(
-    ApsFindInputFunction function,
+    ApsFindInputFunction fn,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
-    ApsFindResultStatus * resultStatus);
+    ApsFindResultStatus * stat);
 
 double apsfindu(
-    ApsFindUniFunction function,
+    ApsFindUniFunction fn,
     double target,
     double intervalStart,
     double intervalEnd);

@@ -31,7 +31,7 @@
 // *************************************************************************************************
 //
 // This implementation is adapted from a combination of the SciPy and Boost implementations:
-// SciPy: https://github.com/scipy/scipy/blob/master/scipy/optimize/zeros.py
+// SciPy: https://github.com/scipy/scipy/blob/main/scipy/optimize/_zeros_py.py
 // Boost: https://github.com/boostorg/math/blob/master/include/boost/math/tools/toms748_solve.hpp
 // Parts not marked particularly either way are common to both SciPy and Boost.
 //
@@ -63,6 +63,9 @@ static const double
 // SciPy Cython: https://docs.scipy.org/doc/scipy/reference/optimize.cython_optimize.html
 //
 // The ResultStatus struct combines SciPy's RootResults class and Boost's returning the final bracket
+//
+// Just as a matter of internal convention, “interval” is used only for input, and when one has first
+// hand checked that it “bracket”-s a root, it is further referred to as a “bracket”.
 
 struct ApsFindSolver
 {
@@ -77,7 +80,7 @@ private:
 
 public:
     ApsFindSolver(
-        ApsFindInputFunction function,
+        ApsFindInputFunction fn,
         void * otherInput,
         double intervalStart,
         double intervalEnd,
@@ -86,7 +89,7 @@ public:
         double relativeTolerance,
         int maximumIterations,
         int interpolationsPerIteration):
-        f{function},
+        f{fn},
         args{otherInput},
         a{intervalStart},
         b{intervalEnd},
@@ -395,7 +398,7 @@ private:
 
 extern "C"
 double apsfindCustom(
-    ApsFindInputFunction function,
+    ApsFindInputFunction fn,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
@@ -428,72 +431,72 @@ double apsfindCustom(
         return NAN;
     }
 
-    return ApsFindSolver(function, otherInput, intervalStart, intervalEnd, resultStatus, absoluteTolerance, relativeTolerance, maximumIterations, interpolationsPerIteration).result();
+    return ApsFindSolver(fn, otherInput, intervalStart, intervalEnd, resultStatus, absoluteTolerance, relativeTolerance, maximumIterations, interpolationsPerIteration).result();
 }
 
 extern "C"
 double apsfind(
-    ApsFindInputFunction function,
+    ApsFindInputFunction fn,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
     ApsFindResultStatus * resultStatus)
 {
-    return apsfindCustom(function, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
+    return apsfindCustom(fn, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
 }
 
 typedef struct
 {
-    ApsFindUniFunction function;
+    ApsFindUniFunction f;
     double target;
 } _ApsFindUniParams;
 
 static double _apsfindUniHelper(double guessInput, void * functionAndTarget)
 {
     _ApsFindUniParams * p = static_cast<_ApsFindUniParams *>(functionAndTarget);
-    return p->function(guessInput) - p->target;
+    return p->f(guessInput) - p->target;
 }
 
 extern "C"
 double apsfindu(
-    ApsFindUniFunction function,
+    ApsFindUniFunction fn,
     double target,
     double intervalStart,
     double intervalEnd)
 {
     _ApsFindUniParams params;
-    params.function = function;
+    params.f = fn;
     params.target = target;
     return apsfind(_apsfindUniHelper, (void *)(&params), intervalStart, intervalEnd, NULL);
 }
 
 extern "C"
-void apsfindResultStatusPrint(FILE * f, ApsFindResultStatus rs, int precision)
+void apsfindResultStatusPrint(FILE * file, ApsFindResultStatus stat, int precision)
 {
-    fprintf(f, "Iterations: %d, Function Calls: %d\n", rs.iterations, rs.functionCalls);
-    fprintf(f, "Bracket: (%.*g, %.*g)\n", precision, rs.bracketStart, precision, rs.bracketEnd);
-    if (rs.errorCode == 0)
-        fprintf(f, "Error: none\n");
+    fprintf(file, "Iterations: %d, Function Calls: %d\n", stat.iterations, stat.functionCalls);
+    fprintf(file, "Bracket: (%.*g, %.*g)\n", precision, stat.bracketStart, precision, stat.bracketEnd);
+    if (stat.errorCode == 0)
+        fprintf(file, "Error: none\n");
     // input errors, using & as they may be OR-ed together
-    if (rs.errorCode & APSFIND_INVALID_INTERVAL_START)
-        fprintf(f, "Error: Non-finite start of interval\n");
-    if (rs.errorCode & APSFIND_INVALID_INTERVAL_END)
-        fprintf(f, "Error: Non-finite end of interval\n");
-    if (rs.errorCode & APSFIND_INVALID_INTERVAL)
-        fprintf(f, "Error: Interval start should be less than interval end\n");
-    if (rs.errorCode & APSFIND_INVALID_ABSOLUTE_TOLERANCE)
-        fprintf(f, "Error: Invalid absolute tolerance, should be zero or finite and at least 4 × machine epsilon\n");
-    if (rs.errorCode & APSFIND_INVALID_RELATIVE_TOLERANCE)
-        fprintf(f, "Error: Invalid relative tolerance, should be zero or finite and at least 4 × machine epsilon\n");
-    if (rs.errorCode & APSFIND_INVALID_MAXIMUM_ITERATIONS)
-        fprintf(f, "Error: Maximum iterations should be at least 1\n");
-    if (rs.errorCode & APSFIND_INVALID_INTERPOLATIONS_PER_ITERATION)
-        fprintf(f, "Error: Interpolations per iteration should be at least 1\n");
+    if (stat.errorCode & APSFIND_INVALID_INTERVAL_START)
+        fprintf(file, "Error: Non-finite start of interval\n");
+    if (stat.errorCode & APSFIND_INVALID_INTERVAL_END)
+        fprintf(file, "Error: Non-finite end of interval\n");
+    if (stat.errorCode & APSFIND_INVALID_INTERVAL)
+        fprintf(file, "Error: Interval start should be less than interval end\n");
+    if (stat.errorCode & APSFIND_INVALID_ABSOLUTE_TOLERANCE)
+        fprintf(file, "Error: Invalid absolute tolerance, should be zero or finite and at least 4 × machine epsilon\n");
+    if (stat.errorCode & APSFIND_INVALID_RELATIVE_TOLERANCE)
+        fprintf(file, "Error: Invalid relative tolerance, should be zero or finite and at least 4 × machine epsilon\n");
+    if (stat.errorCode & APSFIND_INVALID_MAXIMUM_ITERATIONS)
+        fprintf(file, "Error: Maximum iterations should be at least 1\n");
+    if (stat.errorCode & APSFIND_INVALID_INTERPOLATIONS_PER_ITERATION)
+        fprintf(file, "Error: Interpolations per iteration should be at least 1\n");
     // execution errors, using == as they are mutually exclusive
-    if (rs.errorCode == APSFIND_INVALID_FUNCTION_VALUE)
-        fprintf(f, "Error: Non-finite function value encountered\n");
-    if (rs.errorCode == APSFIND_INTERVAL_DOES_NOT_BRACKET_A_ROOT)
-        fprintf(f, "Error: Interval does not bracket a root\n");
-    if (rs.errorCode == APSFIND_MAXIMUM_ITERATIONS_REACHED)
-        fprintf(f, "Error: Maximum iterations reached\n");
+    if (stat.errorCode == APSFIND_INVALID_FUNCTION_VALUE)
+        fprintf(file, "Error: Non-finite function value encountered\n");
+    if (stat.errorCode == APSFIND_INTERVAL_DOES_NOT_BRACKET_A_ROOT)
+        fprintf(file, "Error: Interval does not bracket a root\n");
+    if (stat.errorCode == APSFIND_MAXIMUM_ITERATIONS_REACHED)
+        fprintf(file, "Error: Maximum iterations reached\n");
 }
