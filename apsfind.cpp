@@ -1,8 +1,9 @@
-// toms748
+// apsfind
 // =======
 //
-// TOMS 748 algorithm of Alefeld, Potra and Shi to find a root of a function in
+// The algorithm of Alefeld, Potra and Shi to find a root of a function in
 // a given interval using inverse cubic and “Newton-quadratic” interpolations.
+// This was published as TOMS 748; see reference below.
 //
 // This algorithm with two interpolations per iteration is asymptotically the
 // most efficient method known for finding a root of a four times continuously
@@ -40,7 +41,7 @@
 //
 // *************************************************************************************************
 
-#include "toms748.h"
+#include "apsfind.h"
 #include "areclose.hpp"
 #include <cmath>
 #include <cfloat>
@@ -63,24 +64,24 @@ static const double
 //
 // The ResultStatus struct combines SciPy's RootResults class and Boost's returning the final bracket
 
-struct Toms748Solver
+struct ApsFindSolver
 {
 private:
-    Toms748InputFunction f;
+    ApsFindInputFunction f;
     void * args;
     double a, fa, b, fb, c, fc, d, fd, e, fe, u, fu;
-    Toms748ResultStatus * stat;
+    ApsFindResultStatus * stat;
     AreClose areClose;
     int maxiter, remiter, fncount, k;
     double root;
 
 public:
-    Toms748Solver(
-        Toms748InputFunction function,
+    ApsFindSolver(
+        ApsFindInputFunction function,
         void * otherInput,
         double intervalStart,
         double intervalEnd,
-        Toms748ResultStatus * resultStatus,
+        ApsFindResultStatus * resultStatus,
         double absoluteTolerance,
         double relativeTolerance,
         int maximumIterations,
@@ -107,7 +108,7 @@ public:
             return;
         if (dontBracketARoot(fa, fb))
         {
-            finalize(NAN, TOMS748_INTERVAL_DOES_NOT_BRACKET_A_ROOT, a, b);
+            finalize(NAN, APSFIND_INTERVAL_DOES_NOT_BRACKET_A_ROOT, a, b);
             return;
         }
 
@@ -148,7 +149,7 @@ public:
                 return;
         }
 
-        finalize(NAN, TOMS748_MAXIMUM_ITERATIONS_REACHED, a, b);
+        finalize(NAN, APSFIND_MAXIMUM_ITERATIONS_REACHED, a, b);
     }
 
     double result() const { return root; }
@@ -174,7 +175,7 @@ private:
 
         // final root value returned as midpoint of bracket
         interpolateBisection();
-        finalize(c, TOMS748_NO_ERROR, a, b);
+        finalize(c, APSFIND_NO_ERROR, a, b);
         return true;
     }
 
@@ -184,12 +185,12 @@ private:
         fncount += 1;
         if (fx == 0)
         {
-            finalize(x, TOMS748_NO_ERROR, x, x);
+            finalize(x, APSFIND_NO_ERROR, x, x);
             return true;
         }
         if (!isfinite(fx))
         {
-            finalize(NAN, TOMS748_INVALID_FUNCTION_VALUE, a, b);
+            finalize(NAN, APSFIND_INVALID_FUNCTION_VALUE, a, b);
             return true;
         }
         return false;
@@ -393,106 +394,106 @@ private:
 };
 
 extern "C"
-double toms748Custom(
-    Toms748InputFunction function,
+double apsfindCustom(
+    ApsFindInputFunction function,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
-    Toms748ResultStatus * resultStatus,
+    ApsFindResultStatus * resultStatus,
     double absoluteTolerance,
     double relativeTolerance,
     int maximumIterations,
     int interpolationsPerIteration)
 {
-    int errorCode = TOMS748_NO_ERROR;
+    int errorCode = APSFIND_NO_ERROR;
     if (!isfinite(intervalStart))
-        errorCode |= TOMS748_INVALID_INTERVAL_START;
+        errorCode |= APSFIND_INVALID_INTERVAL_START;
     if (!isfinite(intervalEnd))
-        errorCode |= TOMS748_INVALID_INTERVAL_END;
+        errorCode |= APSFIND_INVALID_INTERVAL_END;
     if (intervalStart >= intervalEnd)
-        errorCode |= TOMS748_INVALID_INTERVAL;
+        errorCode |= APSFIND_INVALID_INTERVAL;
     if (AreClose::invalidTolerance(absoluteTolerance))
-        errorCode |= TOMS748_INVALID_ABSOLUTE_TOLERANCE;
+        errorCode |= APSFIND_INVALID_ABSOLUTE_TOLERANCE;
     if (AreClose::invalidTolerance(relativeTolerance))
-        errorCode |= TOMS748_INVALID_RELATIVE_TOLERANCE;
+        errorCode |= APSFIND_INVALID_RELATIVE_TOLERANCE;
     if (maximumIterations < 1)
-        errorCode |= TOMS748_INVALID_MAXIMUM_ITERATIONS;
+        errorCode |= APSFIND_INVALID_MAXIMUM_ITERATIONS;
     if (interpolationsPerIteration < 1)
-        errorCode |= TOMS748_INVALID_INTERPOLATIONS_PER_ITERATION;
+        errorCode |= APSFIND_INVALID_INTERPOLATIONS_PER_ITERATION;
 
-    if (errorCode != TOMS748_NO_ERROR)
+    if (errorCode != APSFIND_NO_ERROR)
     {
         if (resultStatus)
             resultStatus->errorCode = errorCode;
         return NAN;
     }
 
-    return Toms748Solver(function, otherInput, intervalStart, intervalEnd, resultStatus, absoluteTolerance, relativeTolerance, maximumIterations, interpolationsPerIteration).result();
+    return ApsFindSolver(function, otherInput, intervalStart, intervalEnd, resultStatus, absoluteTolerance, relativeTolerance, maximumIterations, interpolationsPerIteration).result();
 }
 
 extern "C"
-double toms748(
-    Toms748InputFunction function,
+double apsfind(
+    ApsFindInputFunction function,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
-    Toms748ResultStatus * resultStatus)
+    ApsFindResultStatus * resultStatus)
 {
-    return toms748Custom(function, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
+    return apsfindCustom(function, otherInput, intervalStart, intervalEnd, resultStatus, defaultAbsoluteTolerance, defaultRelativeTolerance, defaultMaximumIterations, defaultInterpolationsPerIteration);
 }
 
 typedef struct
 {
-    Toms748DoubleFunction function;
+    ApsFindUniFunction function;
     double target;
-} _Toms748DoubleParams;
+} _ApsFindUniParams;
 
-static double _toms748DoubleHelper(double guessInput, void * functionAndTarget)
+static double _apsfindUniHelper(double guessInput, void * functionAndTarget)
 {
-    _Toms748DoubleParams * p = static_cast<_Toms748DoubleParams *>(functionAndTarget);
+    _ApsFindUniParams * p = static_cast<_ApsFindUniParams *>(functionAndTarget);
     return p->function(guessInput) - p->target;
 }
 
 extern "C"
-double toms748d(
-    Toms748DoubleFunction function,
+double apsfindu(
+    ApsFindUniFunction function,
     double target,
     double intervalStart,
     double intervalEnd)
 {
-    _Toms748DoubleParams params;
+    _ApsFindUniParams params;
     params.function = function;
     params.target = target;
-    return toms748(_toms748DoubleHelper, (void *)(&params), intervalStart, intervalEnd, NULL);
+    return apsfind(_apsfindUniHelper, (void *)(&params), intervalStart, intervalEnd, NULL);
 }
 
 extern "C"
-void toms748ResultStatusPrint(FILE * f, Toms748ResultStatus rs, int precision)
+void apsfindResultStatusPrint(FILE * f, ApsFindResultStatus rs, int precision)
 {
     fprintf(f, "Iterations: %d, Function Calls: %d\n", rs.iterations, rs.functionCalls);
     fprintf(f, "Bracket: (%.*g, %.*g)\n", precision, rs.bracketStart, precision, rs.bracketEnd);
     if (rs.errorCode == 0)
         fprintf(f, "Error: none\n");
     // input errors, using & as they may be OR-ed together
-    if (rs.errorCode & TOMS748_INVALID_INTERVAL_START)
+    if (rs.errorCode & APSFIND_INVALID_INTERVAL_START)
         fprintf(f, "Error: Non-finite start of interval\n");
-    if (rs.errorCode & TOMS748_INVALID_INTERVAL_END)
+    if (rs.errorCode & APSFIND_INVALID_INTERVAL_END)
         fprintf(f, "Error: Non-finite end of interval\n");
-    if (rs.errorCode & TOMS748_INVALID_INTERVAL)
+    if (rs.errorCode & APSFIND_INVALID_INTERVAL)
         fprintf(f, "Error: Interval start should be less than interval end\n");
-    if (rs.errorCode & TOMS748_INVALID_ABSOLUTE_TOLERANCE)
+    if (rs.errorCode & APSFIND_INVALID_ABSOLUTE_TOLERANCE)
         fprintf(f, "Error: Invalid absolute tolerance, should be zero or finite and at least 4 × machine epsilon\n");
-    if (rs.errorCode & TOMS748_INVALID_RELATIVE_TOLERANCE)
+    if (rs.errorCode & APSFIND_INVALID_RELATIVE_TOLERANCE)
         fprintf(f, "Error: Invalid relative tolerance, should be zero or finite and at least 4 × machine epsilon\n");
-    if (rs.errorCode & TOMS748_INVALID_MAXIMUM_ITERATIONS)
+    if (rs.errorCode & APSFIND_INVALID_MAXIMUM_ITERATIONS)
         fprintf(f, "Error: Maximum iterations should be at least 1\n");
-    if (rs.errorCode & TOMS748_INVALID_INTERPOLATIONS_PER_ITERATION)
+    if (rs.errorCode & APSFIND_INVALID_INTERPOLATIONS_PER_ITERATION)
         fprintf(f, "Error: Interpolations per iteration should be at least 1\n");
     // execution errors, using == as they are mutually exclusive
-    if (rs.errorCode == TOMS748_INVALID_FUNCTION_VALUE)
+    if (rs.errorCode == APSFIND_INVALID_FUNCTION_VALUE)
         fprintf(f, "Error: Non-finite function value encountered\n");
-    if (rs.errorCode == TOMS748_INTERVAL_DOES_NOT_BRACKET_A_ROOT)
+    if (rs.errorCode == APSFIND_INTERVAL_DOES_NOT_BRACKET_A_ROOT)
         fprintf(f, "Error: Interval does not bracket a root\n");
-    if (rs.errorCode == TOMS748_MAXIMUM_ITERATIONS_REACHED)
+    if (rs.errorCode == APSFIND_MAXIMUM_ITERATIONS_REACHED)
         fprintf(f, "Error: Maximum iterations reached\n");
 }

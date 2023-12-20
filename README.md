@@ -1,9 +1,10 @@
-# toms748
+# apsfind
 
-## C-compatible implementation of TOMS 748 root finding algorithm
+## C-compatible implementation of Alefeld, Potra and Shi's root finding algorithm (TOMS 748)
 
-This is a C-compatible implementation in C++ of TOMS 748 algorithm of Alefeld, Potra and Shi to find a root of a
-function in a given interval using inverse cubic and “Newton-quadratic” interpolations.
+This is a C-compatible implementation in C++ of the algorithm of Alefeld, Potra and Shi to find a root of a
+function in a given interval using inverse cubic and “Newton-quadratic” interpolations, published as TOMS 748
+(Algorithm 748 of the “Transactions on Mathematical Software”).
 
 This implementation is adapted from a combination of the SciPy Python and Boost C++ implementations.
 
@@ -29,24 +30,24 @@ ACM Trans. Math. Softw. Volume 221(1995) doi = {10.1145/210089.210111}
 
 ## Main Usage
 
-To use this routine, just copy the files `toms748.cpp`, `toms748.h` and `areclose.hpp` to convenient locations in your
-project, do `#include "toms748.h"` and add `toms748.cpp` in your object file compiling and linking.
+To use this routine, just copy the files `apsfind.cpp`, `apsfind.h` and `areclose.hpp` to convenient locations in your
+project, do `#include "apsfind.h"` and add `apsfind.cpp` in your object file compiling and linking.
 
 The basic function is as follows:
 
 ```
-double toms748(
-    Toms748InputFunction function,
+double apsfind(
+    ApsFindInputFunction function,
     void * otherInput,
     double intervalStart,
     double intervalEnd,
-    Toms748ResultStatus * resultStatus);
+    ApsFindResultStatus * resultStatus);
 ```
 
-`Toms748InputFunction` is just a typedef to the function pointer type `double (*)(double, void *)`.
+`ApsFindInputFunction` is just a typedef to the function pointer type `double (*)(double, void *)`.
 
 Basically the function `function` whose root is to be searched for is passed to the root-searching routine in this
-format along with the input bracket for the unknown variable in `intervalStart` and `intervalEnd`.
+format along with the input bracket for the unknown variable as `intervalStart` and `intervalEnd`.
 
 Additional (fixed) input data may also be provided via an opaque pointer `otherInput`, which will be passed as-is to the
 function. The function is expected to cast it to a pointer to the required type and extract the additional data
@@ -64,7 +65,7 @@ should make the usage much more concretely clear.
 
 ## Other Usage
 
-The more customizable function `toms748Custom` (note the capital C) has four additional parameters at the end:
+The more customizable function `apsfindCustom` (note the capital C) has four additional parameters at the end:
 
 ```
     double absoluteTolerance,
@@ -76,27 +77,27 @@ The more customizable function `toms748Custom` (note the capital C) has four add
 The `absoluteTolerance` and `relativeTolerance` are as in the [`areclose`](https://github.com/jamadagni/areclose) test
 used here. The other two should be clear.
 
-A convenience overload for `toms748` is available in C++ which can just take a functor and the input bracket. (The
+A convenience overload for `apsfind` is available in C++ which can just take a functor and the input bracket. (The
 `resultStatus` pointer if not provided defaults to `nullptr`.) This may make usage more conceptually convenient, but may
 also mean slightly more compiled code due to the minimal template functions connecting C++ to the actual C API routines.
 
-The convenience function `toms748d` is also available:
+The convenience function `apsfindu` is also available:
 
 ```
-double toms748d(
-    Toms748DoubleFunction function,
+double apsfindu(
+    ApsFindUniFunction function,
     double target,
     double intervalStart,
     double intervalEnd)
 ```
 
-This helps search for an input value to a univariate function that will produce a given output.
+This helps search for an input value to a univariate function (hence the “u”) that will produce a given output.
 
-Here `Toms748DoubleFunction` is just a typedef to the univariate double-valued function pointer type `double (*)(double)`.
+Here `ApsFindUniFunction` is just a typedef to the univariate double-valued function pointer type `double (*)(double)`.
 
 `target` is the value that needs to be produced by `function`. `intervalStart` and `intervalEnd` are as before.
 
-Reading the [header file](toms748.h) should also provide more insight.
+Reading the [header file](apsfind.h) should also provide more insight.
 
 ## License
 

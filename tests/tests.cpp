@@ -11,8 +11,8 @@
 // Use, modification and distribution are subject to the
 // Boost Software License, Version 1.0
 
-#ifdef TOMS748
-#include "toms748.h"
+#ifdef APSFIND
+#include "apsfind.h"
 #endif
 
 #ifdef BISECTION
@@ -152,9 +152,9 @@ int test_results_from_scipy_index = 0;
 
 void run_test_helper(TestParams &tp, double a, double b)
 {
-#ifdef TOMS748
-    Toms748ResultStatus result_status;
-    double r = toms748(test, static_cast<void *>(&tp), a, b, &result_status);
+#ifdef APSFIND
+    ApsFindResultStatus result_status;
+    double r = apsfind(test, static_cast<void *>(&tp), a, b, &result_status);
 #endif
 
 #ifdef BISECTION

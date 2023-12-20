@@ -1,4 +1,4 @@
-#include "../toms748.h"
+#include "../apsfind.h"
 #include "elliptic_integral.h"
 #include <math.h>
 #include <stdio.h>
@@ -23,7 +23,7 @@ double ellipticRoot(double arcLength, double knownRadius)
     _RootFunctionParams params;
     params.arc = arcLength;
     params.rad = knownRadius;
-    return toms748(_rootFunction, (void *)(&params), guess - arcLength / 10, guess + arcLength / 10, NULL);
+    return apsfind(_rootFunction, (void *)(&params), guess - arcLength / 10, guess + arcLength / 10, NULL);
 }
 
 int main()

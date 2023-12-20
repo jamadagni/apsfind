@@ -1,6 +1,6 @@
 // jaya jaya shankara hara hara shankara
 
-#include "../toms748.h"
+#include "../apsfind.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -43,7 +43,7 @@ int main()
     printf("The mean of the above       = %f\n", meanVal);
 
     printf("The degree of the unit supercircle with above as area:\n");
-    printf("%f\n", toms748d(areaOfUnitSuperCircle, meanVal, 2, 10));
+    printf("%f\n", apsfindu(areaOfUnitSuperCircle, meanVal, 2, 10));
 
     printf("Note that this is close to but not equal to pi!\n");
 
